@@ -49,6 +49,7 @@ func (s *Service) List(ctx context.Context) ([]*Application, error) { //Спис
 type ChangeStatusInput struct {
 	ID     uuid.UUID
 	Status Status
+	// new upadte
 }
 
 func (s *Service) ChangeStatus(ctx context.Context, in ChangeStatusInput) (*Application, error) { //Смена статуса
