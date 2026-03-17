@@ -44,6 +44,7 @@ func main() {
 		log.Fatalf("postgres ping error: %v", err)
 	}
 
+	// Больше не отправляет события
 	// 5. Подключение к RabbitMQ
 	/* rmqConn, err := amqp.Dial(cfg.RabbitMQURL)
 	if err != nil {
