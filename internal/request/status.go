@@ -1,4 +1,4 @@
-package application // Описывает возможные статусы и переходы.
+package request // Описывает возможные статусы и переходы.
 
 type Status string
 
@@ -33,4 +33,19 @@ var allowedTransitions = map[Status][]Status{
 	StatusRejected:  {},
 	StatusCompleted: {},
 	StatusCanceled:  {},
+}
+
+func (s Status) Valid() bool {
+	switch s {
+	case StatusDraft,
+		StatusSubmitted,
+		StatusApproved,
+		StatusRejected,
+		StatusInProgress,
+		StatusCompleted,
+		StatusCanceled:
+		return true
+	default:
+		return false
+	}
 }

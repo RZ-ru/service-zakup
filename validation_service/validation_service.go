@@ -1,15 +1,13 @@
 package validation_service
 
 import (
-	"strings"
-
 	"github.com/google/uuid"
 )
 
 type CreateApplicationInput struct {
-	ProductID  uuid.UUID `json:"product_id"`
-	Department string    `json:"department"`
-	Amount     float64   `json:"amount"`
+	ProductID uuid.UUID `json:"product_id"`
+	Comment   string    `json:"comment"`
+	Quantity  int32     `json:"quantity"`
 }
 
 type FieldError struct {
@@ -29,11 +27,11 @@ func ValidateCreateApplication(in CreateApplicationInput) error {
 	if in.ProductID == uuid.Nil {
 		errs = append(errs, FieldError{Field: "product_id", Message: "must be a valid uuid"})
 	}
-	if strings.TrimSpace(in.Department) == "" {
-		errs = append(errs, FieldError{Field: "department", Message: "must not be empty"})
-	}
-	if in.Amount <= 0 {
-		errs = append(errs, FieldError{Field: "amount", Message: "must be greater than 0"})
+	// if strings.TrimSpace(in.Comment) == "" {
+	// 	errs = append(errs, FieldError{Field: "department", Message: "must not be empty"})
+	// }
+	if in.Quantity <= 0 {
+		errs = append(errs, FieldError{Field: "quantity", Message: "must be greater than 0"})
 	}
 
 	if len(errs) > 0 {

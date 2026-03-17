@@ -7,7 +7,7 @@ services:
       - "5672:5672"
       - "15672:15672"
   postgres:
-    image: postgres:15
+    image: postgres:16
     container_name: postgres-db
     restart: unless-stopped
     environment:
@@ -21,4 +21,3 @@ services:
 
 volumes:
   postgres_data:
-  pgadmin_data:

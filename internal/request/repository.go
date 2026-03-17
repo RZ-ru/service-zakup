@@ -1,4 +1,4 @@
-package application // Говорит, какие операции хранения нужны.
+package request // Определяет интерфейс хранилища заявок.
 
 import (
 	"context"
@@ -11,4 +11,5 @@ type Repository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*Application, error)
 	List(ctx context.Context) ([]*Application, error)
 	Update(ctx context.Context, app *Application) error
+	CreateWithOutbox(ctx context.Context, app *Application, event *OutboxEvent) error
 }

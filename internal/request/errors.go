@@ -1,4 +1,4 @@
-package application // Общие ошибки домена
+package request // Общие ошибки домена
 
 import "errors"
 
@@ -8,4 +8,7 @@ var (
 	ErrInvalidQuantity         = errors.New("invalid quantity")
 	ErrInvalidStatusTransition = errors.New("invalid status transition")
 	ErrApplicationNotFound     = errors.New("application not found")
+	ErrNilApplication          = errors.New("nil application")
+	ErrInvalidApplicationID    = errors.New("invalid application id")
+	ErrInvalidStatus           = errors.New("invalid status")
 )

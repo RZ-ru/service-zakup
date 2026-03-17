@@ -3,6 +3,8 @@ package config
 import (
 	"log"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -13,6 +15,8 @@ type Config struct {
 }
 
 func MustLoad() *Config {
+	_ = godotenv.Load()
+
 	cfg := &Config{
 		HTTPAddress:      getEnv("HTTP_ADDRESS", ":8080"),
 		PostgresDSN:      getEnv("POSTGRES_DSN", ""),
