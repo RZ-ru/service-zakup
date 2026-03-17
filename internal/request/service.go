@@ -8,14 +8,12 @@ import (
 )
 
 type Service struct {
-	repo      Repository
-	publisher EventPublisher
+	repo Repository
 }
 
-func NewService(repo Repository, publisher EventPublisher) *Service {
+func NewService(repo Repository) *Service {
 	return &Service{
-		repo:      repo,
-		publisher: publisher,
+		repo: repo,
 	}
 }
 
@@ -97,22 +95,27 @@ func (s *Service) ChangeStatus(ctx context.Context, in ChangeStatusInput) (*Appl
 		return nil, err
 	}
 
-	if err := s.repo.Update(ctx, app); err != nil {
-		return nil, err
-	}
-
-	event := ApplicationStatusChangedEvent{
+	eventPayload, err := json.Marshal(ApplicationStatusChangedEvent{
 		ApplicationID: app.ID,
 		OldStatus:     string(oldStatus),
 		NewStatus:     string(app.Status),
 		ChangedAt:     app.UpdatedAt,
 		Version:       app.Version,
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	if s.publisher != nil {
-		if err := s.publisher.PublishApplicationStatusChanged(ctx, event); err != nil {
-			return nil, err
-		}
+	outboxEvent := NewOutboxEvent(
+		"application",
+		app.ID,
+		"application.status_changed",
+		"application.status_changed",
+		eventPayload,
+	)
+
+	if err := s.repo.UpdateWithOutbox(ctx, app, outboxEvent); err != nil {
+		return nil, err
 	}
 
 	return app, nil

@@ -12,4 +12,5 @@ type Repository interface {
 	List(ctx context.Context) ([]*Application, error)
 	Update(ctx context.Context, app *Application) error
 	CreateWithOutbox(ctx context.Context, app *Application, event *OutboxEvent) error
+	UpdateWithOutbox(ctx context.Context, app *Application, event *OutboxEvent) error
 }
