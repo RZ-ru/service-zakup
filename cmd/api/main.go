@@ -12,14 +12,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"zakup/internal/broker/rabbitmq"
 	"zakup/internal/config"
 	"zakup/internal/handler"
 	"zakup/internal/migrator"
 	"zakup/internal/repo/postgres"
 	"zakup/internal/request"
-
-	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
@@ -48,7 +45,7 @@ func main() {
 	}
 
 	// 5. Подключение к RabbitMQ
-	rmqConn, err := amqp.Dial(cfg.RabbitMQURL)
+	/* rmqConn, err := amqp.Dial(cfg.RabbitMQURL)
 	if err != nil {
 		log.Fatalf("rabbitmq connect error: %v", err)
 	}
@@ -69,25 +66,22 @@ func main() {
 		nil,
 	); err != nil {
 		log.Fatalf("rabbitmq exchange declare error: %v", err)
-	}
+	} */
 
 	// 6. Создаем repository
 	applicationRepo := postgres.NewApplicationRepository(pgPool)
 
-	// 7. Создаем publisher
-	eventPublisher := rabbitmq.NewPublisher(rmqChannel, cfg.RabbitMQExchange)
+	// 7. Создаем service
+	applicationService := request.NewService(applicationRepo)
 
-	// 8. Создаем service
-	applicationService := request.NewService(applicationRepo, eventPublisher)
-
-	// 9. Создаем handler
+	// 8. Создаем handler
 	applicationHandler := handler.NewApplicationHandler(applicationService)
 
-	// 10. Роутер
+	// 9. Роутер
 	r := gin.Default()
 	applicationHandler.Register(r)
 
-	// 11. HTTP сервер
+	// 10. HTTP сервер
 	server := &http.Server{
 		Addr:         cfg.HTTPAddress,
 		Handler:      r,
@@ -96,7 +90,7 @@ func main() {
 		IdleTimeout:  30 * time.Second,
 	}
 
-	// 12. Запуск сервера в горутине
+	// 11. Запуск сервера в горутине
 	go func() {
 		log.Printf("HTTP server started on %s", cfg.HTTPAddress)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -104,14 +98,14 @@ func main() {
 		}
 	}()
 
-	// 13. Ожидание сигнала завершения
+	// 12. Ожидание сигнала завершения
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	<-stop
 
 	log.Println("shutting down server...")
 
-	// 14. Корректное завершение
+	// 13. Корректное завершение
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
 
