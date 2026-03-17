@@ -265,3 +265,85 @@ func (r *ApplicationRepository) CreateWithOutbox(
 
 	return tx.Commit(ctx)
 }
+
+func (r *ApplicationRepository) UpdateWithOutbox(
+	ctx context.Context,
+	app *request.Application,
+	event *request.OutboxEvent,
+) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	appQuery := `
+		UPDATE applications
+		SET
+			author_id = $2,
+			product_id = $3,
+			quantity = $4,
+			comment = $5,
+			status = $6,
+			version = $7,
+			updated_at = $8
+		WHERE id = $1
+	`
+
+	cmdTag, err := tx.Exec(
+		ctx,
+		appQuery,
+		app.ID,
+		app.AuthorID,
+		app.ProductID,
+		app.Quantity,
+		app.Comment,
+		string(app.Status),
+		app.Version,
+		app.UpdatedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	if cmdTag.RowsAffected() == 0 {
+		return ErrApplicationNotFound
+	}
+
+	outboxQuery := `
+		INSERT INTO outbox_events (
+			id,
+			aggregate_type,
+			aggregate_id,
+			event_type,
+			routing_key,
+			payload,
+			status,
+			attempts,
+			error,
+			created_at,
+			published_at
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+	`
+
+	_, err = tx.Exec(
+		ctx,
+		outboxQuery,
+		event.ID,
+		event.AggregateType,
+		event.AggregateID,
+		event.EventType,
+		event.RoutingKey,
+		event.Payload,
+		string(event.Status),
+		event.Attempts,
+		event.Error,
+		event.CreatedAt,
+		event.PublishedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
