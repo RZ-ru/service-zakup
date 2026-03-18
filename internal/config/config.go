@@ -27,10 +27,13 @@ func MustLoad() *Config {
 	if cfg.PostgresDSN == "" {
 		log.Fatal("Postgress_DSN is required")
 	}
-	if cfg.RabbitMQURL == "" {
-		log.Fatal("RabbitMQ_URL is required")
-	}
+	/*
+		if cfg.RabbitMQURL == "" {
+			log.Fatal("RabbitMQ_URL is required")
+		}
+	*/
 	return cfg
+
 }
 
 func getEnv(key string, defaulValue string) string {

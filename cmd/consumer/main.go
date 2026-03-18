@@ -16,6 +16,9 @@ import (
 
 func main() {
 	cfg := config.MustLoad()
+	if cfg.RabbitMQURL == "" {
+		log.Fatal("RABBITMQ_URL is required for consumer")
+	}
 
 	ctx := context.Background()
 
