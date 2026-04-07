@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"zakup/internal/request"
@@ -57,11 +58,13 @@ func (h *ApplicationHandler) PostApplications(c *gin.Context) {
 		Comment:   req.Comment,
 	})
 	if err != nil {
-		if err == request.ErrInvalidProductID {
+		//if err == request.ErrInvalidProductID
+		if errors.Is(err, request.ErrInvalidProductID) {
 			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid product_id"})
 			return
 		}
-		if err == request.ErrInvalidQuantity {
+		//if err == request.ErrInvalidQuantity
+		if errors.Is(err, request.ErrInvalidQuantity) {
 			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid quantity"})
 			return
 		}
@@ -71,7 +74,6 @@ func (h *ApplicationHandler) PostApplications(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, toApplicationResponse(app))
 }
-
 func (h *ApplicationHandler) PatchApplicationStatus(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -95,7 +97,8 @@ func (h *ApplicationHandler) PatchApplicationStatus(c *gin.Context) {
 		Status: req.Status,
 	})
 	if err != nil {
-		if err == request.ErrInvalidStatusTransition {
+		//if err == request.ErrInvalidStatusTransition
+		if errors.Is(err, request.ErrInvalidStatusTransition) {
 			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid status transition"})
 			return
 		}
