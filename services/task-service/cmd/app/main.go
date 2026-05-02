@@ -1,14 +1,13 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 
+	"task-service/internal/database"
 	"task-service/internal/handlers"
 	"task-service/internal/middleware"
 	"task-service/internal/repository"
@@ -28,23 +27,9 @@ func main() {
 		log.Fatal("DB_URL not set")
 	}
 
-	// подключение
-	dbConn, err := sql.Open("postgres", dbURL)
-	if err != nil {
-		log.Fatal(err)
-	}
+	db := database.NewPostgres(dbURL)
 
-	// ждём БД
-	waitForDB(dbConn)
-
-	// миграции
-	//db.RunMigrations(dbURL)
-
-	if err := dbConn.Ping(); err != nil {
-		log.Fatal(err)
-	}
-
-	repo := repository.NewPostgresRepo(dbConn)
+	repo := repository.NewPostgresRepo(db)
 	service := services.NewTaskService(repo)
 	handler := handlers.NewHandler(service)
 
@@ -52,19 +37,4 @@ func main() {
 	r.GET("/tasks/:id", handler.GetTask)
 
 	r.Run(":8080")
-}
-
-func waitForDB(db *sql.DB) {
-	for i := 0; i < 10; i++ {
-		err := db.Ping()
-		if err == nil {
-			log.Println("DB connected")
-			return
-		}
-
-		log.Println("waiting for DB...")
-		time.Sleep(2 * time.Second)
-	}
-
-	log.Fatal("cannot connect to DB")
 }
