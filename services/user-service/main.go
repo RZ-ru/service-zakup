@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"user-service/internal/db"
 	"user-service/internal/handlers"
 	"user-service/internal/middleware"
 	"user-service/internal/repository"
@@ -33,7 +32,7 @@ func main() {
 	waitForDB(dbConn)
 
 	// миграции
-	db.RunMigrations(dbURL)
+	//db.RunMigrations(dbURL)
 
 	if err := dbConn.Ping(); err != nil {
 		log.Fatal(err)

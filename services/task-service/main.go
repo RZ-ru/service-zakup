@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 
-	"task-service/internal/db"
 	"task-service/internal/handlers"
 	"task-service/internal/middleware"
 	"task-service/internal/repository"
@@ -39,7 +38,7 @@ func main() {
 	waitForDB(dbConn)
 
 	// миграции
-	db.RunMigrations(dbURL)
+	//db.RunMigrations(dbURL)
 
 	if err := dbConn.Ping(); err != nil {
 		log.Fatal(err)
