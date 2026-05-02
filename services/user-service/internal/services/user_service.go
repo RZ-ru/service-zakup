@@ -4,17 +4,21 @@ import (
 	"context"
 	"errors"
 	"user-service/internal/models"
-	"user-service/internal/repository"
 
 	"github.com/google/uuid"
 )
 
-type UserService struct {
-	repo repository.UserRepository
+type UserRepository interface {
+	Create(ctx context.Context, user *models.User) error
+	//GetByID(id string) (*models.User, error)
 }
 
-func NewUserService(r repository.UserRepository) *UserService {
-	return &UserService{repo: r}
+type UserService struct {
+	repo UserRepository
+}
+
+func NewUserService(repo UserRepository) *UserService {
+	return &UserService{repo: repo}
 }
 
 func (s *UserService) Create(ctx context.Context, email, name string) (*models.User, error) {
