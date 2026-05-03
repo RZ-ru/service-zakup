@@ -38,3 +38,21 @@ func (c *PermissionClient) Create(userID, taskID string) error {
 
 	return nil
 }
+
+func (c *PermissionClient) Check(userID, taskID string) (bool, error) {
+	resp, err := http.Get(
+		c.baseURL + "/permissions/check?user_id=" + userID + "&task_id=" + taskID,
+	)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Allowed bool `json:"allowed"`
+	}
+
+	json.NewDecoder(resp.Body).Decode(&result)
+
+	return result.Allowed, nil
+}
