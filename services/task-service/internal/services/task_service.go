@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"task-service/internal/clients"
 	"task-service/internal/models"
 	"task-service/internal/repository"
 
@@ -13,10 +14,14 @@ import (
 
 type TaskService struct {
 	repo repository.TaskRepository
+	perm *clients.PermissionClient
 }
 
-func NewTaskService(r repository.TaskRepository) *TaskService {
-	return &TaskService{repo: r}
+func NewTaskService(repo repository.TaskRepository, perm *clients.PermissionClient) *TaskService {
+	return &TaskService{
+		repo: repo,
+		perm: perm,
+	}
 }
 
 func (s *TaskService) Create(ctx context.Context, title, description, userID string) (*models.Task, error) {
@@ -39,9 +44,25 @@ func (s *TaskService) Create(ctx context.Context, title, description, userID str
 		return nil, err
 	}
 
+	// Выдаем права, связываем пользователя и задачу
+	err := s.perm.Create(userID, task.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	return task, nil
 }
 
-func (s *TaskService) GetByID(ctx context.Context, id string) (*models.Task, error) {
-	return s.repo.GetByID(ctx, id)
+func (s *TaskService) GetByID(ctx context.Context, userID, taskID string) (*models.Task, error) {
+
+	allowed, err := s.perm.Check(userID, taskID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, errors.New("forbidden")
+	}
+
+	return s.repo.GetByID(ctx, taskID)
 }

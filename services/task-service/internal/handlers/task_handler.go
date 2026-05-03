@@ -17,6 +17,7 @@ func NewHandler(s *services.TaskService) *Handler {
 }
 
 func (h *Handler) CreateTask(c *gin.Context) {
+
 	var req struct {
 		Title       string `json:"title"`
 		Description string `json:"description"`
@@ -28,8 +29,9 @@ func (h *Handler) CreateTask(c *gin.Context) {
 	}
 
 	userID := c.GetString("user_id")
+	ctx := c.Request.Context()
 
-	task, err := h.service.Create(c, req.Title, req.Description, userID)
+	task, err := h.service.Create(ctx, req.Title, req.Description, userID)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
@@ -39,9 +41,11 @@ func (h *Handler) CreateTask(c *gin.Context) {
 }
 
 func (h *Handler) GetTask(c *gin.Context) {
-	id := c.Param("id")
+	taskID := c.Param("id")
+	userID := c.GetString("user_id")
+	ctx := c.Request.Context()
 
-	task, err := h.service.GetByID(c, id)
+	task, err := h.service.GetByID(ctx, userID, taskID)
 	if err != nil {
 		c.JSON(404, gin.H{"error": "not found"})
 		return

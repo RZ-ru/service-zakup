@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 
+	"task-service/internal/clients"
 	"task-service/internal/database"
 	"task-service/internal/handlers"
 	"task-service/internal/middleware"
@@ -28,9 +29,10 @@ func main() {
 	}
 
 	db := database.NewPostgres(dbURL)
+	permClient := clients.NewPermissionClient("http://permission-service:8080")
 
 	repo := repository.NewPostgresRepo(db)
-	service := services.NewTaskService(repo)
+	service := services.NewTaskService(repo, permClient)
 	handler := handlers.NewHandler(service)
 
 	r.POST("/tasks", handler.CreateTask)
