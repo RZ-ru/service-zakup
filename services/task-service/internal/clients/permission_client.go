@@ -70,7 +70,6 @@ func (c *PermissionClient) Check(ctx context.Context, taskID string) (bool, erro
 		return false, err
 	}
 
-	// 🔥 ОБЯЗАТЕЛЬНО
 	authHeader := ctx.Value("auth_header").(string)
 	req.Header.Set("Authorization", authHeader)
 
