@@ -38,6 +38,10 @@ services:
       DB_URL: postgres://postgres:postgres@postgres:5432/permission_db?sslmode=disable
     depends_on:
       - postgres
+  auth-service:
+    build: ./services/auth-service
+    ports:
+      - "8083:8080"
 
 volumes:
   postgres_data:
