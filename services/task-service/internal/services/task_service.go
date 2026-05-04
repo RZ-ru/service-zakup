@@ -45,7 +45,7 @@ func (s *TaskService) Create(ctx context.Context, title, description, userID str
 	}
 
 	// Выдаем права, связываем пользователя и задачу
-	err := s.perm.Create(userID, task.ID)
+	err := s.perm.Create(ctx, userID, task.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -53,9 +53,13 @@ func (s *TaskService) Create(ctx context.Context, title, description, userID str
 	return task, nil
 }
 
-func (s *TaskService) GetByID(ctx context.Context, userID, taskID string) (*models.Task, error) {
+func (s *TaskService) GetByID(ctx context.Context, userID, taskID, role string) (*models.Task, error) {
 
-	allowed, err := s.perm.Check(userID, taskID)
+	if role == "admin" {
+		return s.repo.GetByID(ctx, taskID)
+	}
+
+	allowed, err := s.perm.Check(ctx, taskID)
 	if err != nil {
 		return nil, err
 	}

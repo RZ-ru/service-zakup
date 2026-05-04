@@ -20,7 +20,7 @@ func main() {
 	r := gin.New()
 
 	r.Use(middleware.RequestID())
-	r.Use(middleware.UserContext())
+	r.Use(middleware.Auth())
 	r.Use(middleware.Logger())
 
 	dbURL := os.Getenv("DB_URL")

@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"task-service/internal/services"
 
@@ -29,7 +30,14 @@ func (h *Handler) CreateTask(c *gin.Context) {
 	}
 
 	userID := c.GetString("user_id")
-	ctx := c.Request.Context()
+
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(401, gin.H{"error": "missing Authorization header"})
+		return
+	}
+
+	ctx := context.WithValue(c.Request.Context(), "auth_header", authHeader)
 
 	task, err := h.service.Create(ctx, req.Title, req.Description, userID)
 	if err != nil {
@@ -43,9 +51,16 @@ func (h *Handler) CreateTask(c *gin.Context) {
 func (h *Handler) GetTask(c *gin.Context) {
 	taskID := c.Param("id")
 	userID := c.GetString("user_id")
-	ctx := c.Request.Context()
+	role := c.GetString("role")
 
-	task, err := h.service.GetByID(ctx, userID, taskID)
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(401, gin.H{"error": "missing Authorization header"})
+		return
+	}
+	ctx := context.WithValue(c.Request.Context(), "auth_header", authHeader)
+
+	task, err := h.service.GetByID(ctx, userID, taskID, role)
 	if err != nil {
 		c.JSON(404, gin.H{"error": "not found"})
 		return
