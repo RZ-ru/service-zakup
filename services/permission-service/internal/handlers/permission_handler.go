@@ -16,7 +16,6 @@ func NewHandler(s *services.PermissionService) *Handler {
 
 func (h *Handler) Create(c *gin.Context) {
 	var req struct {
-		UserID string `json:"user_id"`
 		TaskID string `json:"task_id"`
 	}
 
@@ -25,7 +24,18 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	err := h.service.Create(req.UserID, req.TaskID)
+	if req.TaskID == "" {
+		c.JSON(400, gin.H{"error": "task_id required"})
+		return
+	}
+
+	userID := c.GetString("user_id")
+	if userID == "" {
+		c.JSON(401, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	err := h.service.Create(userID, req.TaskID)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
@@ -35,8 +45,18 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 func (h *Handler) Check(c *gin.Context) {
-	userID := c.Query("user_id")
+	userID := c.GetString("user_id")
 	taskID := c.Query("task_id")
+
+	if userID == "" {
+		c.JSON(401, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	if taskID == "" {
+		c.JSON(400, gin.H{"error": "task_id required"})
+		return
+	}
 
 	ok, err := h.service.Check(userID, taskID)
 	if err != nil {
