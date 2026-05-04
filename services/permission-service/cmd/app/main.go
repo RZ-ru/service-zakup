@@ -18,6 +18,7 @@ func main() {
 
 	r.Use(middleware.RequestID())
 	r.Use(middleware.Logger())
+	r.Use(middleware.Auth())
 
 	dbURL := os.Getenv("DB_URL")
 	if dbURL == "" {
