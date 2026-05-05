@@ -41,7 +41,12 @@ func (h *Handler) CreateTask(c *gin.Context) {
 
 	task, err := h.service.Create(ctx, req.Title, req.Description, userID)
 	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		if err.Error() == "forbidden" {
+			c.JSON(403, gin.H{"error": "forbidden"})
+			return
+		}
+
+		c.JSON(404, gin.H{"error": "not found"})
 		return
 	}
 
@@ -62,6 +67,11 @@ func (h *Handler) GetTask(c *gin.Context) {
 
 	task, err := h.service.GetByID(ctx, userID, taskID, role)
 	if err != nil {
+		if err.Error() == "forbidden" {
+			c.JSON(403, gin.H{"error": "forbidden"})
+			return
+		}
+
 		c.JSON(404, gin.H{"error": "not found"})
 		return
 	}

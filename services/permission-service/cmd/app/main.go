@@ -34,6 +34,6 @@ func main() {
 	r.POST("/permissions", handler.Create)
 	r.GET("/permissions/check", handler.Check)
 
-	r.Run(":8082")
+	r.Run(":8080")
 
 }
