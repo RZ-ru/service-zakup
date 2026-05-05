@@ -1,2 +1,3 @@
 CREATE DATABASE user_db;
 CREATE DATABASE task_db;
+CREATE DATABASE permission_db;
