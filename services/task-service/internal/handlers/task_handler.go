@@ -46,7 +46,7 @@ func (h *Handler) CreateTask(c *gin.Context) {
 			return
 		}
 
-		c.JSON(404, gin.H{"error": "not found"})
+		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 

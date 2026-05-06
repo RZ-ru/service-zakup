@@ -20,14 +20,14 @@ func (h *Handler) Login(c *gin.Context) {
 		UserID string `json:"user_id"`
 	}
 
-	if err := c.BindJSON(&req); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	token, err := h.service.GenerateToken(req.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot generate token"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "cannot generate token"})
 		return
 	}
 

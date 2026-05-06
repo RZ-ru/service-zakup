@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
 
 	"auth-service/internal/handlers"
@@ -10,7 +12,10 @@ import (
 func main() {
 	r := gin.Default()
 
-	svc := services.NewAuthService()
+	svc, err := services.NewAuthService()
+	if err != nil {
+		log.Fatal(err)
+	}
 	h := handlers.NewHandler(svc)
 
 	r.POST("/login", h.Login)

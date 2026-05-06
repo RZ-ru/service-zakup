@@ -1,0 +1,11 @@
+service PermissionService {
+  rpc Check(CheckRequest) returns (CheckResponse);
+}
+
+message CheckRequest {
+  string task_id = 1;
+}
+
+message CheckResponse {
+  bool allowed = 1;
+}
