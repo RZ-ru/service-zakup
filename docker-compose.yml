@@ -63,6 +63,14 @@ services:
       - "8083:8080"
     environment:
       JWT_SECRET: dev-secret
+  notification-service:
+    build: ./services/notification-service
+    environment:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      USER_SERVICE_URL: http://user-service:8080
+    depends_on:
+      - rabbitmq
+      - user-service
 
 volumes:
   postgres_data:
