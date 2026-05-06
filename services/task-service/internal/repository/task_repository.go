@@ -1,11 +1,17 @@
-package repository // Определяет интерфейс хранилища заявок.
+package repository
 
 import (
 	"context"
+	"database/sql"
 	"task-service/internal/models"
 )
 
 type TaskRepository interface {
-	Create(ctx context.Context, task *models.Task) error
+	BeginTx(ctx context.Context) (*sql.Tx, error)
+	CreateTx(ctx context.Context, tx *sql.Tx, task *models.Task) error
 	GetByID(ctx context.Context, id string) (*models.Task, error)
+
+	//GetTasks(ctx context.Context) ([]models.Task, error)
+	//UpdateByID(ctx context.Context, id string) (*models.Task, error)
+	//DeleteByID(ctx context.Context, id string) error
 }

@@ -11,13 +11,19 @@ import (
 
 type PermissionClient struct {
 	baseURL string
+	client  *http.Client
 }
 
 func NewPermissionClient(url string) *PermissionClient {
-	return &PermissionClient{baseURL: url}
+	return &PermissionClient{
+		baseURL: url,
+		client: &http.Client{
+			Timeout: 3 * time.Second,
+		},
+	}
 }
 
-func (c *PermissionClient) Create(ctx context.Context, userID, taskID string) error {
+func (c *PermissionClient) Create(ctx context.Context, taskID string) error {
 	return retry(3, 200*time.Millisecond, func() error {
 
 		body := map[string]string{
@@ -41,10 +47,14 @@ func (c *PermissionClient) Create(ctx context.Context, userID, taskID string) er
 
 		req.Header.Set("Content-Type", "application/json")
 
-		authHeader := ctx.Value("auth_header").(string)
+		authHeader, err := authHeaderFromContext(ctx)
+		if err != nil {
+			return err
+		}
+
 		req.Header.Set("Authorization", authHeader)
 
-		resp, err := http.DefaultClient.Do(req)
+		resp, err := c.client.Do(req)
 		if err != nil {
 			return err
 		}
@@ -70,10 +80,14 @@ func (c *PermissionClient) Check(ctx context.Context, taskID string) (bool, erro
 		return false, err
 	}
 
-	authHeader := ctx.Value("auth_header").(string)
+	authHeader, err := authHeaderFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
 	req.Header.Set("Authorization", authHeader)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return false, err
 	}
@@ -105,4 +119,13 @@ func retry(attempts int, sleep time.Duration, fn func() error) error {
 	}
 
 	return err
+}
+
+func authHeaderFromContext(ctx context.Context) (string, error) {
+	authHeader, ok := ctx.Value("auth_header").(string)
+	if !ok || authHeader == "" {
+		return "", fmt.Errorf("missing auth header in context")
+	}
+
+	return authHeader, nil
 }

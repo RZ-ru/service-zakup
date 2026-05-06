@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -13,14 +14,16 @@ import (
 )
 
 type TaskService struct {
-	repo repository.TaskRepository
-	perm *clients.PermissionClient
+	repo   repository.TaskRepository
+	outbox repository.OutboxRepository
+	perm   *clients.PermissionClient
 }
 
-func NewTaskService(repo repository.TaskRepository, perm *clients.PermissionClient) *TaskService {
+func NewTaskService(repo repository.TaskRepository, outbox repository.OutboxRepository, perm *clients.PermissionClient) *TaskService {
 	return &TaskService{
-		repo: repo,
-		perm: perm,
+		repo:   repo,
+		outbox: outbox,
+		perm:   perm,
 	}
 }
 
@@ -40,12 +43,57 @@ func (s *TaskService) Create(ctx context.Context, title, description, userID str
 		UpdatedAt:   time.Now(),
 	}
 
-	if err := s.repo.Create(ctx, task); err != nil {
+	payload, err := json.Marshal(map[string]string{
+		"task_id": task.ID,
+		"user_id": task.UserID,
+		"title":   task.Title,
+		"status":  task.Status,
+	})
+	if err != nil {
 		return nil, err
 	}
 
+	event := &models.OutboxEvent{
+		ID:            uuid.NewString(),
+		AggregateType: "task",
+		AggregateID:   task.ID,
+		EventType:     "task.created",
+		RoutingKey:    "task.created",
+		Payload:       payload,
+		Status:        "pending",
+		Attempts:      0,
+		CreatedAt:     time.Now(),
+		ProcessedAt:   nil,
+	}
+
+	tx, err := s.repo.BeginTx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback()
+		}
+	}()
+
+	if err := s.repo.CreateTx(ctx, tx, task); err != nil {
+		return nil, err
+	}
+
+	if err := s.outbox.CreateTx(ctx, tx, event); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	committed = true
+
 	// Выдаем права, связываем пользователя и задачу
-	err := s.perm.Create(ctx, userID, task.ID)
+	err = s.perm.Create(ctx, task.ID)
 	if err != nil {
 		return nil, err
 	}

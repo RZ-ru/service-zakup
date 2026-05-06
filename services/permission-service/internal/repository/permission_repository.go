@@ -3,5 +3,5 @@ import "permission-service/internal/models"
 
 type PermissionRepository interface {
 	Create(p *models.Permission) error
-	Exists(userID, taskID string) (bool, error)
+	GetRole(userID, taskID string) (string, error)
 }

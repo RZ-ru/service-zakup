@@ -14,13 +14,18 @@ func NewPostgresRepo(db *sql.DB) *PostgresRepo {
 	return &PostgresRepo{db: db}
 }
 
-func (r *PostgresRepo) Create(ctx context.Context, task *models.Task) error {
+func (r *PostgresRepo) BeginTx(ctx context.Context) (*sql.Tx, error) {
+	return r.db.BeginTx(ctx, nil)
+}
+
+func (r *PostgresRepo) CreateTx(ctx context.Context, tx *sql.Tx, task *models.Task) error {
 	query := `
-	INSERT INTO tasks (id, title, description, status, user_id, created_at, updated_at)
-	VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO tasks (id, title, description, status, user_id, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 
-	_, err := r.db.ExecContext(ctx,
+	_, err := tx.ExecContext(
+		ctx,
 		query,
 		task.ID,
 		task.Title,
@@ -30,6 +35,7 @@ func (r *PostgresRepo) Create(ctx context.Context, task *models.Task) error {
 		task.CreatedAt,
 		task.UpdatedAt,
 	)
+
 	return err
 }
 
@@ -56,3 +62,15 @@ func (r *PostgresRepo) GetByID(ctx context.Context, id string) (*models.Task, er
 
 	return &t, nil
 }
+
+/*
+func (r *PostgresRepo) GetTasks(ctx context.Context) ([]models.Task, error) {
+	return nil, nil
+}
+func (r *PostgresRepo) UpdateByID(ctx context.Context, id string) (*models.Task, error) {
+	return nil, nil
+}
+func (r *PostgresRepo) DeleteByID(ctx context.Context, id string) error {
+	return nil
+}
+*/

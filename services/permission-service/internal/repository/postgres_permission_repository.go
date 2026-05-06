@@ -21,15 +21,14 @@ func (r *PostgresRepo) Create(p *models.Permission) error {
 	return err
 }
 
-func (r *PostgresRepo) Exists(userID, taskID string) (bool, error) {
-	var exists bool
+func (r *PostgresRepo) GetRole(userID, taskID string) (string, error) {
+	var role string
 
 	err := r.db.QueryRow(`
-		SELECT EXISTS (
-			SELECT 1 FROM permissions
-			WHERE user_id = $1 AND task_id = $2
-		)
-	`, userID, taskID).Scan(&exists)
+		SELECT role
+		FROM permissions
+		WHERE user_id = $1 AND task_id = $2
+	`, userID, taskID).Scan(&role)
 
-	return exists, err
+	return role, err
 }
