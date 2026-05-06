@@ -44,10 +44,11 @@ func (s *TaskService) Create(ctx context.Context, title, description, userID str
 	}
 
 	payload, err := json.Marshal(map[string]string{
-		"task_id": task.ID,
-		"user_id": task.UserID,
-		"title":   task.Title,
-		"status":  task.Status,
+		"event_type": "task.created",
+		"task_id":    task.ID,
+		"user_id":    task.UserID,
+		"title":      task.Title,
+		"status":     task.Status,
 	})
 	if err != nil {
 		return nil, err
