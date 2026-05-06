@@ -4,27 +4,28 @@ import (
 	"context"
 	"errors"
 	"user-service/internal/models"
+	"user-service/internal/repository"
 
 	"github.com/google/uuid"
 )
 
-type UserRepository interface {
-	Create(ctx context.Context, user *models.User) error
-	//GetByID(id string) (*models.User, error)
-}
-
 type UserService struct {
-	repo UserRepository
+	repo repository.UserRepository
 }
 
-func NewUserService(repo UserRepository) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(repo repository.UserRepository) *UserService {
+	return &UserService{
+		repo: repo,
+	}
 }
 
 func (s *UserService) Create(ctx context.Context, email, name string) (*models.User, error) {
-
 	if email == "" {
 		return nil, errors.New("email required")
+	}
+
+	if name == "" {
+		return nil, errors.New("name required")
 	}
 
 	user := &models.User{
@@ -38,4 +39,12 @@ func (s *UserService) Create(ctx context.Context, email, name string) (*models.U
 	}
 
 	return user, nil
+}
+
+func (s *UserService) GetByID(ctx context.Context, id string) (*models.User, error) {
+	if id == "" {
+		return nil, errors.New("user_id required")
+	}
+
+	return s.repo.GetByID(ctx, id)
 }

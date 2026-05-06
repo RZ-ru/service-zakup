@@ -33,3 +33,15 @@ func (h *Handler) CreateUser(c *gin.Context) {
 
 	c.JSON(201, user)
 }
+
+func (h *Handler) GetUser(c *gin.Context) {
+	userID := c.Param("id")
+
+	user, err := h.service.GetByID(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(404, gin.H{"error": "user not found"})
+		return
+	}
+
+	c.JSON(200, user)
+}

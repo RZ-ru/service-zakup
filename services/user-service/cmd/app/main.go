@@ -33,6 +33,7 @@ func main() {
 	handler := handlers.NewHandler(service)
 
 	r.POST("/users", handler.CreateUser)
+	r.GET("/users/:id", handler.GetUser)
 
 	r.Run(":8080")
 }

@@ -7,10 +7,5 @@ import (
 
 type UserRepository interface {
 	Create(ctx context.Context, user *models.User) error
-}
-
-type InMemoryRepo struct{}
-
-func (r *InMemoryRepo) Create(ctx context.Context, user *models.User) error {
-	return nil
+	GetByID(ctx context.Context, id string) (*models.User, error)
 }
