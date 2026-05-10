@@ -47,7 +47,16 @@ func main() {
 	defer rabbit.Close()
 	//_ = rabbit
 
-	permClient := clients.NewPermissionClient("http://permission-service:8080")
+	permissionGRPCAddr := os.Getenv("PERMISSION_GRPC_ADDR")
+	if permissionGRPCAddr == "" {
+		permissionGRPCAddr = "permission-service:9090"
+	}
+
+	permClient, err := clients.NewPermissionClient(permissionGRPCAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer permClient.Close()
 
 	taskRepo := repository.NewPostgresRepo(db)
 	outboxRepo := repository.NewPostgresOutboxRepo(db)
@@ -63,6 +72,8 @@ func main() {
 
 	r.POST("/tasks", handler.CreateTask)
 	r.GET("/tasks/:id", handler.GetTask)
+	r.PATCH("/tasks/:id", handler.UpdateTask)
+	r.DELETE("/tasks/:id", handler.DeleteTask)
 
 	//8080
 	if err := r.Run(); err != nil {

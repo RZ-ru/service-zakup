@@ -1,131 +1,81 @@
 package clients
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
+
+	permissionpb "task-service/proto"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 type PermissionClient struct {
-	baseURL string
-	client  *http.Client
+	conn   *grpc.ClientConn
+	client permissionpb.PermissionServiceClient
 }
 
-func NewPermissionClient(url string) *PermissionClient {
-	return &PermissionClient{
-		baseURL: url,
-		client: &http.Client{
-			Timeout: 3 * time.Second,
-		},
+func NewPermissionClient(addr string) (*PermissionClient, error) {
+	conn, err := grpc.Dial(
+		addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return nil, err
 	}
+
+	return &PermissionClient{
+		conn:   conn,
+		client: permissionpb.NewPermissionServiceClient(conn),
+	}, nil
+}
+
+func (c *PermissionClient) Close() error {
+	return c.conn.Close()
 }
 
 func (c *PermissionClient) Create(ctx context.Context, taskID string) error {
-	return retry(3, 200*time.Millisecond, func() error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
 
-		body := map[string]string{
-			"task_id": taskID,
-		}
+	ctx, err := contextWithAuth(ctx)
+	if err != nil {
+		return err
+	}
 
-		data, err := json.Marshal(body)
-		if err != nil {
-			return err
-		}
-
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodPost,
-			c.baseURL+"/permissions",
-			bytes.NewBuffer(data),
-		)
-		if err != nil {
-			return err
-		}
-
-		req.Header.Set("Content-Type", "application/json")
-
-		authHeader, err := authHeaderFromContext(ctx)
-		if err != nil {
-			return err
-		}
-
-		req.Header.Set("Authorization", authHeader)
-
-		resp, err := c.client.Do(req)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusCreated {
-			return fmt.Errorf("unexpected status: %d", resp.StatusCode)
-		}
-
-		return nil
+	_, err = c.client.CreatePermission(ctx, &permissionpb.CreatePermissionRequest{
+		TaskId: taskID,
 	})
-}
-
-func (c *PermissionClient) Check(ctx context.Context, taskID string) (bool, error) {
-
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		c.baseURL+"/permissions/check?task_id="+taskID,
-		nil,
-	)
-	if err != nil {
-		return false, err
-	}
-
-	authHeader, err := authHeaderFromContext(ctx)
-	if err != nil {
-		return false, err
-	}
-
-	req.Header.Set("Authorization", authHeader)
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return false, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("status: %d", resp.StatusCode)
-	}
-
-	var result struct {
-		Allowed bool `json:"allowed"`
-	}
-
-	json.NewDecoder(resp.Body).Decode(&result)
-
-	return result.Allowed, nil
-}
-
-func retry(attempts int, sleep time.Duration, fn func() error) error {
-	var err error
-
-	for i := 0; i < attempts; i++ {
-		err = fn()
-		if err == nil {
-			return nil
-		}
-
-		time.Sleep(sleep)
-	}
 
 	return err
 }
 
-func authHeaderFromContext(ctx context.Context) (string, error) {
-	authHeader, ok := ctx.Value("auth_header").(string)
-	if !ok || authHeader == "" {
-		return "", fmt.Errorf("missing auth header in context")
+func (c *PermissionClient) Check(ctx context.Context, taskID string) (bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	ctx, err := contextWithAuth(ctx)
+	if err != nil {
+		return false, err
 	}
 
-	return authHeader, nil
+	resp, err := c.client.CheckPermission(ctx, &permissionpb.CheckPermissionRequest{
+		TaskId: taskID,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return resp.Allowed, nil
+}
+
+func contextWithAuth(ctx context.Context) (context.Context, error) {
+	authHeader, ok := ctx.Value("auth_header").(string)
+	if !ok || authHeader == "" {
+		return nil, fmt.Errorf("missing auth header in context")
+	}
+
+	return metadata.AppendToOutgoingContext(ctx, "authorization", authHeader), nil
 }

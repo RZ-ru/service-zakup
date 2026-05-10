@@ -42,9 +42,11 @@ services:
       DB_URL: postgres://postgres:postgres@postgres:5432/task_db?sslmode=disable
       JWT_SECRET: dev-secret
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      PERMISSION_GRPC_ADDR: permission-service:9090
     depends_on:
       - postgres
       - rabbitmq
+      - permission-service
 
   permission-service:
     build: ./services/permission-service

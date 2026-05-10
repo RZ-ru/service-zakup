@@ -63,14 +63,51 @@ func (r *PostgresRepo) GetByID(ctx context.Context, id string) (*models.Task, er
 	return &t, nil
 }
 
-/*
-func (r *PostgresRepo) GetTasks(ctx context.Context) ([]models.Task, error) {
-	return nil, nil
+func (r *PostgresRepo) UpdateTx(ctx context.Context, tx *sql.Tx, task *models.Task) (*models.Task, error) {
+	query := `
+		UPDATE tasks
+		SET title = $2,
+		    description = $3,
+		    status = $4,
+		    updated_at = $5
+		WHERE id = $1
+		RETURNING id, title, description, status, user_id, created_at, updated_at
+	`
+
+	row := tx.QueryRowContext(
+		ctx,
+		query,
+		task.ID,
+		task.Title,
+		task.Description,
+		task.Status,
+		task.UpdatedAt,
+	)
+
+	var updated models.Task
+	err := row.Scan(
+		&updated.ID,
+		&updated.Title,
+		&updated.Description,
+		&updated.Status,
+		&updated.UserID,
+		&updated.CreatedAt,
+		&updated.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &updated, nil
 }
-func (r *PostgresRepo) UpdateByID(ctx context.Context, id string) (*models.Task, error) {
-	return nil, nil
+
+func (r *PostgresRepo) DeleteTx(ctx context.Context, tx *sql.Tx, id string) error {
+	query := `
+		DELETE FROM tasks
+		WHERE id = $1
+	`
+
+	_, err := tx.ExecContext(ctx, query, id)
+
+	return err
 }
-func (r *PostgresRepo) DeleteByID(ctx context.Context, id string) error {
-	return nil
-}
-*/

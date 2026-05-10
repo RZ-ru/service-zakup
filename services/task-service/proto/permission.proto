@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package permission;
 
-option go_package = "permission-service/proto;permissionpb";
+option go_package = "task-service/proto;permissionpb";
 
 service PermissionService {
   rpc CreatePermission(CreatePermissionRequest) returns (CreatePermissionResponse);

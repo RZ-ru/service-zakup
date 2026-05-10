@@ -78,3 +78,77 @@ func (h *Handler) GetTask(c *gin.Context) {
 
 	c.JSON(200, task)
 }
+
+func (h *Handler) UpdateTask(c *gin.Context) {
+	taskID := c.Param("id")
+
+	role, _ := c.Get("role")
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(401, gin.H{"error": "missing Authorization header"})
+		return
+	}
+
+	ctx := context.WithValue(c.Request.Context(), "auth_header", authHeader)
+
+	var req struct {
+		Title       string `json:"title"`
+		Description string `json:"description"`
+		Status      string `json:"status"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	task, err := h.service.Update(
+		ctx,
+		taskID,
+		req.Title,
+		req.Description,
+		req.Status,
+		role.(string),
+	)
+	if err != nil {
+		if err.Error() == "forbidden" {
+			c.JSON(403, gin.H{"error": "forbidden"})
+			return
+		}
+
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, task)
+}
+
+func (h *Handler) DeleteTask(c *gin.Context) {
+	taskID := c.Param("id")
+
+	roleRaw, _ := c.Get("role")
+	role, _ := roleRaw.(string)
+
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(401, gin.H{"error": "missing Authorization header"})
+		return
+	}
+
+	ctx := context.WithValue(c.Request.Context(), "auth_header", authHeader)
+
+	err := h.service.Delete(ctx, taskID, role)
+	if err != nil {
+		if err.Error() == "forbidden" {
+			c.JSON(403, gin.H{"error": "forbidden"})
+			return
+		}
+
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "task deleted",
+	})
+}
